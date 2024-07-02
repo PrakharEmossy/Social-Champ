@@ -4,6 +4,11 @@ const contentSchema = new mongoose.Schema({
   platform: String,
   content: String,
   accessToken: String,
-},{timestamps:true});
+  image: String,
+  video: String,
+  document: String,
+});
 
-module.exports = mongoose.model('Content', contentSchema);
+const Content = mongoose.model('Content', contentSchema);
+
+module.exports = Content;

@@ -1,20 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PublishContent.css';
 import { BiLike } from "react-icons/bi";
-import { FaRegCommentDots } from "react-icons/fa6";
+import { FaRegCommentDots } from "react-icons/fa";
 import { AiOutlineShareAlt } from "react-icons/ai";
 import { LuSendHorizonal } from "react-icons/lu";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
-
+import { FiCamera } from "react-icons/fi";
+import { RiHashtag } from "react-icons/ri";
+import { MdOutlineDrafts } from "react-icons/md";
+import { GrIntegration } from "react-icons/gr";
+import { FaPoll } from "react-icons/fa";
+import { RiRadioButtonLine } from "react-icons/ri";
+import Modal from 'react-modal';
+import EmojiPicker from 'emoji-picker-react';
 
 const PublishContent = () => {
   const [selectedPlatform, setSelectedPlatform] = useState('LinkedIn');
   const [content, setContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const fileInputRef = useRef(null);
+  const [firstComment, setFirstComment] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -34,6 +43,7 @@ const PublishContent = () => {
     try {
       const formData = new FormData();
       formData.append('content', content);
+      formData.append('firstComment', firstComment);
       formData.append('accessToken', accessToken);
       if (selectedFile) {
         formData.append('file', selectedFile);
@@ -49,12 +59,17 @@ const PublishContent = () => {
       alert('Data posted successfully');
     } catch (error) {
       console.error('Error publishing content:', error.response?.data || error.message);
+      alert('Failed to publish content');
     }
   };
 
   const handleContentChange = (e) => {
     setContent(e.target.value);
     setPreviewContent(e.target.value);
+  };
+
+  const handleFirstCommentChange = (e) => {
+    setFirstComment(e.target.value);
   };
 
   const handleDropdownToggle = () => {
@@ -65,15 +80,43 @@ const PublishContent = () => {
     window.location.href = '/';
   };
 
-  const handleUploadButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
-      console.log('Selected file:', file);
+    }
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    setContent(prevContent => prevContent + emojiObject.emoji);
+    setPreviewContent(prevContent => prevContent + emojiObject.emoji);
+    setIsEmojiModalOpen(false);
+  };
+
+  const handleOpenEmojiModal = () => {
+    setIsEmojiModalOpen(true);
+  };
+
+  const handleCloseEmojiModal = () => {
+    setIsEmojiModalOpen(false);
+  };
+
+  const handleAddMedia = (type) => {
+    switch (type) {
+      case 'device':
+        // Implement device file upload logic
+        alert('Device file upload will be implemented here.');
+        break;
+      case 'googleDrive':
+        // Implement Google Drive integration
+        alert('Google Drive integration will be implemented here.');
+        break;
+      case 'oneDrive':
+        // Implement OneDrive integration
+        alert('OneDrive integration will be implemented here.');
+        break;
+      default:
+        break;
     }
   };
 
@@ -85,13 +128,13 @@ const PublishContent = () => {
           <span className="publish-to-label">Publish to</span>
           <div className="custom-dropdown">
             <div className="selected-platform" onClick={handleDropdownToggle}>
-              <img src="/path/to/linkedin-avatar.png" alt="LinkedIn Avatar" />
+              <img src="https://t4.ftcdn.net/jpg/03/40/12/49/360_F_340124934_bz3pQTLrdFpH92ekknuaTHy8JuXgG7fi.jpg" alt="LinkedIn Avatar" />
               <span>Prakhar Khare</span>
             </div>
             {showDropdown && (
               <div className="dropdown-menu">
                 <div className="dropdown-item">
-                  <img src="/path/to/linkedin-avatar.png" alt="LinkedIn Avatar" />
+                  <img src="https://t4.ftcdn.net/jpg/03/40/12/49/360_F_340124934_bz3pQTLrdFpH92ekknuaTHy8JuXgG7fi.jpg" alt="LinkedIn Avatar" />
                   <span>Prakhar Khare</span>
                 </div>
                 <div className="add-social-account">
@@ -102,21 +145,27 @@ const PublishContent = () => {
           </div>
         </div>
         <div className='icon-section'>
-        <textarea
-          className="content-textarea"
-          value={content}
-          onChange={handleContentChange}
-          placeholder=   "Write your content here..."
-          style={{outline:'none',border:'none'}}
-        ></textarea>
-        <div>
-          <button><HiOutlineEmojiHappy /></button>
-        </div>
+          <textarea
+            className="content-textarea"
+            value={content}
+            onChange={handleContentChange}
+            placeholder="Write your content here..."
+          ></textarea>
+          <div>
+            <button className="addMore" title="Add Emojis" onClick={handleOpenEmojiModal}><HiOutlineEmojiHappy /></button>
+            <button className="addMore" title="Add Media" onClick={() => setIsMediaModalOpen(true)}><FiCamera /></button>
+            <button className="addMore" title="Add HashTags"><RiHashtag /></button>
+            <button className="addMore" title="Drafts"><MdOutlineDrafts /></button>
+            <button className="addMore" title="Integrations"><GrIntegration /></button>
+            <button className="addMore" title="Add Polls"><FaPoll /></button>
+          </div>
         </div>
         <div className="platform-options">
           <h3>LinkedIn Options</h3>
           <textarea
             className="first-comment"
+            value={firstComment}
+            onChange={handleFirstCommentChange}
             placeholder="First comment with the post (Optional)"
           ></textarea>
           <div className="privacy-status">
@@ -130,11 +179,9 @@ const PublishContent = () => {
           </div>
           <div className="document-upload">
             <span>Document Upload (Carousel)</span>
-            <button className="upload-button" onClick={handleUploadButtonClick}>Upload Document</button>
+            <button className="upload-button">Upload Document</button>
             <input
               type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
               onChange={handleFileChange}
             />
           </div>
@@ -156,29 +203,66 @@ const PublishContent = () => {
         <h3>Preview</h3>
         <div className="preview-container">
           <div className="preview-header">
-            <img src="/path/to/linkedin-logo.png" alt="LinkedIn Logo" />
+            <img src="https://cdn1.iconfinder.com/data/icons/logotypes/32/circle-linkedin-512.png" alt="LinkedIn Logo" />
           </div>
           <div className="preview-body">
             <div className="user-info">
-              <img src="/path/to/user-avatar.png" alt="User Avatar" />
+              <img src="https://t4.ftcdn.net/jpg/03/40/12/49/360_F_340124934_bz3pQTLrdFpH92ekknuaTHy8JuXgG7fi.jpg" alt="User Avatar" />
               <div className="user-details">
                 <span>Prakhar Khare</span>
-                <span>Now</span>
+                <span>Now</span><RiRadioButtonLine />
               </div>
             </div>
             <div className="preview-content">
               {previewContent}
+              {firstComment && (
+                <div className="comment-preview">
+                  <div className="comment-user-info">
+                    <img src="https://t4.ftcdn.net/jpg/03/40/12/49/360_F_340124934_bz3pQTLrdFpH92ekknuaTHy8JuXgG7fi.jpg" alt="Comment User Avatar" />
+                    <div className="comment-user-details">
+                      <span>Prakhar Khare</span>
+                    </div>
+                  </div>
+                  <div className="comment-content">
+                    {firstComment}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="preview-actions">
-             <BiLike /> Like
+              <BiLike /> Like
               <FaRegCommentDots /> Comment
               <AiOutlineShareAlt /> Share
               <LuSendHorizonal /> Send
-              
             </div>
           </div>
         </div>
       </div>
+      <Modal
+        isOpen={isEmojiModalOpen}
+        onRequestClose={handleCloseEmojiModal}
+        contentLabel="Emoji Picker"
+        className="emoji-modal"
+        overlayClassName="emoji-modal-overlay"
+      >
+        <div>
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
+          <button className="close-modal-button" onClick={handleCloseEmojiModal}>Close</button>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isMediaModalOpen}
+        onRequestClose={() => setIsMediaModalOpen(false)}
+        contentLabel="Media Picker"
+        className="media-modal"
+        overlayClassName="media-modal-overlay"
+      >
+        <div className="media-picker-container">
+          <button className="media-option" onClick={() => handleAddMedia('device')}>Add from Device</button>
+          <button className="media-option" onClick={() => handleAddMedia('googleDrive')}>Google Drive</button>
+          <button className="media-option" onClick={() => handleAddMedia('oneDrive')}>OneDrive</button>
+        </div>
+      </Modal>
     </div>
   );
 };
