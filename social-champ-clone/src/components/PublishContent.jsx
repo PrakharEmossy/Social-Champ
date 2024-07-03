@@ -46,7 +46,7 @@ const PublishContent = () => {
       formData.append('firstComment', firstComment);
       formData.append('accessToken', accessToken);
       if (selectedFile) {
-        formData.append('file', selectedFile);
+        formData.append('document', selectedFile);
       }
 
       const response = await axios.post(`http://localhost:3001/publish?platform=${selectedPlatform.toLowerCase()}`, formData, {

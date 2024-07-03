@@ -1,9 +1,11 @@
-const express = require('express');
+ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const Content = require('./models/content');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 const app = express();
 const port = 3001;
 
@@ -13,6 +15,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve static files from the 'uploads' directory
 
 mongoose.connect('mongodb://localhost:27017/socialMedia', { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
@@ -21,10 +24,16 @@ db.once('open', () => {
   console.log('Connected to MongoDB');
 });
 
+// Ensure the 'uploads' directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -86,36 +95,28 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 });
 
 // Save content to the database
-app.post('/publish', upload.fields([
-  { name: 'file', maxCount: 1 },  // Ensure this matches the client-side 'file' name
-  { name: 'image', maxCount: 1 },
-  { name: 'video', maxCount: 1 },
-  { name: 'document', maxCount: 1 }
-]), async (req, res) => {
-  const { platform } = req.query;
-  const { content, accessToken } = req.body;
-  const files = req.files;
-  
-  console.log("req.files upload", files);
-  console.log("this is request body", req.body);
-  console.log("this is request params", req.query);
-  console.log("Uploaded files:", files);
+app.post('/publish', upload.single('document'), async (req, res) => {
+  const { platform, content, accessToken } = req.body;
+  const file = req.file; // Multer saves file information to req.file
+
+  if (!content || !accessToken) {
+    return res.status(400).json({ message: 'Content and access token are required' });
+  }
 
   const newContent = new Content({
     platform: platform,
     content: content,
     accessToken: accessToken,
-    image: files.image ? files.image[0].path : null,
-    video: files.video ? files.video[0].path : null,
-    document: files.document ? files.document[0].path : null,
+    document: file ? file.path : null, // Save the file path to the 'document' field
   });
 
-  console.log("this is new content", newContent);
-
   try {
-    await newContent.save();
+   const savedata = await newContent.save();
     res.status(200).json({ message: 'Content saved successfully' });
-  } catch (error) {
+    console.log("savedata",savedata);
+  }
+  
+  catch (error) {
     res.status(500).json({ message: 'Failed to save content', error });
   }
 });
