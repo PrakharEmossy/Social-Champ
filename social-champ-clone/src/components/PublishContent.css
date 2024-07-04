@@ -421,6 +421,13 @@
     background-color: #e0e0e0;
 }
 
+.media-preview img {
+    max-width: 100%;
+    max-height: 100px;
+    /* Adjust based on your design */
+    display: block;
+    margin: 10px 0;
+}
 
 
 /* Adjust modal and overlay styles as previously defined */

@@ -22,7 +22,7 @@ const PublishContent = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [firstComment, setFirstComment] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [filePreview, setFilePreview] = useState(null); // State to store image preview URL
   const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
 
   useEffect(() => {
@@ -32,6 +32,15 @@ const PublishContent = () => {
       localStorage.setItem('accessToken', accessToken);
     }
   }, []);
+
+  const clearState = () => {
+    setContent('');
+    setPreviewContent('');
+    setFirstComment('');
+    setSelectedFile(null);
+    setFilePreview(null);
+    setIsEmojiModalOpen(false);
+  };
 
   const handlePublish = async () => {
     const accessToken = localStorage.getItem('accessToken');
@@ -57,6 +66,7 @@ const PublishContent = () => {
 
       console.log('Publish response:', response.data);
       alert('Data posted successfully');
+      clearState(); // Clear state after successful publish
     } catch (error) {
       console.error('Error publishing content:', error.response?.data || error.message);
       alert('Failed to publish content');
@@ -83,7 +93,29 @@ const PublishContent = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.onload = () => {
+          const { width, height } = img;
+          if (width < 250 || height < 250 || width > 6000 || height > 6000) {
+            alert('The image dimensions should be between 250px * 250px and 6000px * 6000px.');
+            setSelectedFile(null);
+            setFilePreview(null);
+          } else {
+            setSelectedFile(file);
+            setFilePreview(reader.result);
+          }
+        };
+        img.src = reader.result;
+      };
+
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        setSelectedFile(file);
+        setFilePreview(null); // Reset preview for non-image files
+      }
     }
   };
 
@@ -99,25 +131,6 @@ const PublishContent = () => {
 
   const handleCloseEmojiModal = () => {
     setIsEmojiModalOpen(false);
-  };
-
-  const handleAddMedia = (type) => {
-    switch (type) {
-      case 'device':
-        // Implement device file upload logic
-        alert('Device file upload will be implemented here.');
-        break;
-      case 'googleDrive':
-        // Implement Google Drive integration
-        alert('Google Drive integration will be implemented here.');
-        break;
-      case 'oneDrive':
-        // Implement OneDrive integration
-        alert('OneDrive integration will be implemented here.');
-        break;
-      default:
-        break;
-    }
   };
 
   return (
@@ -153,7 +166,15 @@ const PublishContent = () => {
           ></textarea>
           <div>
             <button className="addMore" title="Add Emojis" onClick={handleOpenEmojiModal}><HiOutlineEmojiHappy /></button>
-            <button className="addMore" title="Add Media" onClick={() => setIsMediaModalOpen(true)}><FiCamera /></button>
+            <button className="addMore" title="Add Media">
+              <FiCamera onClick={() => document.getElementById('file-input').click()} />
+            </button>
+            <input
+              type="file"
+              id="file-input"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
             <button className="addMore" title="Add HashTags"><RiHashtag /></button>
             <button className="addMore" title="Drafts"><MdOutlineDrafts /></button>
             <button className="addMore" title="Integrations"><GrIntegration /></button>
@@ -177,7 +198,7 @@ const PublishContent = () => {
               <input type="radio" name="privacy" value="Connections" /> Connections
             </label>
           </div>
-          <div className="document-upload">
+           <div className="document-upload">
             <span>Document Upload (Carousel)</span>
             <button className="upload-button">Upload Document</button>
             <input
@@ -190,7 +211,7 @@ const PublishContent = () => {
             <input type="text" placeholder="Enter video title" />
           </div>
         </div>
-        <div className="post-timing">
+             <div className="post-timing">
           <span>When to post</span>
           <select>
             <option value="post-now">Post Now</option>
@@ -223,45 +244,32 @@ const PublishContent = () => {
                       <span>Prakhar Khare</span>
                     </div>
                   </div>
-                  <div className="comment-content">
+                  <div className="comment-text">
                     {firstComment}
                   </div>
                 </div>
               )}
+              {filePreview && (
+                <div className="media-preview">
+                  <img src={filePreview} alt="Selected File Preview" />
+                </div>
+              )}
             </div>
-            <div className="preview-actions">
-              <BiLike /> Like
-              <FaRegCommentDots /> Comment
-              <AiOutlineShareAlt /> Share
-              <LuSendHorizonal /> Send
-            </div>
+          </div>
+          <div className="preview-actions">
+            <BiLike /> Like
+            <FaRegCommentDots /> Comment
+            <AiOutlineShareAlt /> Share
+            <LuSendHorizonal /> Send
           </div>
         </div>
       </div>
       <Modal
         isOpen={isEmojiModalOpen}
         onRequestClose={handleCloseEmojiModal}
-        contentLabel="Emoji Picker"
-        className="emoji-modal"
-        overlayClassName="emoji-modal-overlay"
+        contentLabel="Emoji Picker Modal"
       >
-        <div>
-          <EmojiPicker onEmojiClick={handleEmojiClick} />
-          <button className="close-modal-button" onClick={handleCloseEmojiModal}>Close</button>
-        </div>
-      </Modal>
-      <Modal
-        isOpen={isMediaModalOpen}
-        onRequestClose={() => setIsMediaModalOpen(false)}
-        contentLabel="Media Picker"
-        className="media-modal"
-        overlayClassName="media-modal-overlay"
-      >
-        <div className="media-picker-container">
-          <button className="media-option" onClick={() => handleAddMedia('device')}>Add from Device</button>
-          <button className="media-option" onClick={() => handleAddMedia('googleDrive')}>Google Drive</button>
-          <button className="media-option" onClick={() => handleAddMedia('oneDrive')}>OneDrive</button>
-        </div>
+        <EmojiPicker onEmojiClick={handleEmojiClick} />
       </Modal>
     </div>
   );
