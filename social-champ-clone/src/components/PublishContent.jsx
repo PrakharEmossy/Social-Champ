@@ -90,7 +90,7 @@ const PublishContent = () => {
     window.location.href = '/';
   };
 
-  const handleFileChange = (e) => {
+    const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -112,9 +112,12 @@ const PublishContent = () => {
 
       if (file.type.startsWith('image/')) {
         reader.readAsDataURL(file);
+      } else if (file.type.startsWith('video/')) {
+        setSelectedFile(file);
+        setFilePreview(URL.createObjectURL(file)); // Create a URL for video preview
       } else {
         setSelectedFile(file);
-        setFilePreview(null); // Reset preview for non-image files
+        setFilePreview(null); // Reset preview for non-image and non-video files
       }
     }
   };
@@ -126,7 +129,7 @@ const PublishContent = () => {
   };
 
   const handleOpenEmojiModal = () => {
-    setIsEmojiModalOpen(true);
+    setIsEmojiModalOpen(true);  
   };
 
   const handleCloseEmojiModal = () => {
@@ -200,7 +203,7 @@ const PublishContent = () => {
           </div>
            <div className="document-upload">
             <span>Document Upload (Carousel)</span>
-            <button className="upload-button">Upload Document</button>
+            {/* //<button className="upload-button">Upload Document</button> */}
             <input
               type="file"
               onChange={handleFileChange}
@@ -249,11 +252,17 @@ const PublishContent = () => {
                   </div>
                 </div>
               )}
-              {filePreview && (
+              {filePreview && selectedFile && selectedFile.type.startsWith('image/') &&  (
                 <div className="media-preview">
                   <img src={filePreview} alt="Selected File Preview" />
+                  
                 </div>
-              )}
+                    )}
+                {filePreview && selectedFile && selectedFile.type.startsWith('video/') &&  (
+                <div className="media-preview">
+                  <video src={filePreview} controls className="file-preview" />
+                  </div>     
+            )}
             </div>
           </div>
           <div className="preview-actions">
